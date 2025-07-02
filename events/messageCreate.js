@@ -56,12 +56,19 @@ module.exports = {
     let userHistory = [];
 
     channelHistory.reverse().forEach(msg => {
-      if (msg.author.id === message.author.id || msg.author.bot) {
-        const role = msg.author.bot ? 'model' : 'user';
-        const text = msg.content.replace(/<@!?\d+>/, '').trim();
-        if (text) {
-          userHistory.push({ role, parts: [{ text }] });
-        }
+      let role = null;
+      const text = msg.content.replace(/<@!?\d+>/, '').trim();
+
+      if (msg.author.id === message.author.id) {
+        role = 'user';
+      } else if (msg.author.id === message.client.user.id) {
+        role = 'model';
+      } else if (msg.webhookId && userAgent?.name && msg.author.name === userAgent.name) {
+        role = 'model';
+      }
+
+      if (role && text) {
+        userHistory.push({ role, parts: [{ text }] });
       }
     });
 
@@ -123,7 +130,7 @@ module.exports = {
         return;
       }
 
-      if (userAgent?.name && userAgent?.avatar) {
+      if (userAgent?.name) {
         const webhook = await message.channel.createWebhook({
             name: userAgent.name,
             avatar: userAgent.avatar,
